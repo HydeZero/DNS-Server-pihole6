@@ -16,6 +16,11 @@
    },
    {
       "type": "a",
+      "name": "gpcm.gs.nintendowifi.net",
+      "value": "95.217.77.151"
+   },
+   {
+      "type": "a",
       "name": "master.gs.nintendowifi.net",
       "value": "95.217.77.181"
    },
