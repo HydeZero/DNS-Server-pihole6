@@ -1,9 +1,9 @@
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser(
-            prog='WiiLink PiHole6 Setup',
-            description='Adds the current pihole list to your PiHole6 server\'s DNS config via the server API.')
-    parser.add_argument("server", default="http://pi.hole:80")
+            prog='python3 pihole6-setup.py',
+            description='Adds the current pihole list to your Pi-hole v6 server\'s DNS config via the server API.')
+    parser.add_argument("server", help="URL to the server.")
 
     args = parser.parse_args()
 
