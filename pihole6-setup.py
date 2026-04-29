@@ -32,14 +32,24 @@ if __name__=="__main__":
         csrf = auth_json["session"]["csrf"]
     except Exception as e:
         print("Error parsing json, exiting.")
+        print(e)
         exit()
 
     print("Authentication complete.")
     
-    # get hosts
-
-    with open("dns_zones-hosts.txt", "r") as hosts:
-        host_list = hosts.read()
+    # get hosts from url, and if not url, file.
+    try:
+        r = requests.get("https://raw.githubusercontent.com/WiiLink24/DNS-Server/master/dns_zones-hosts.txt")
+        with open("dns_zones-hosts.txt", "wb") as file:
+            file.write(r.content)
+            file.close()
+    finally:
+        try:
+            with open("dns_zones-hosts.txt", "r") as hosts:
+                host_list = hosts.read()
+        except FileNotFoundError as e:
+            print("Unable to get hosts file.", e)
+            exit()
 
     hosts = host_list.split("\n")
 
@@ -60,6 +70,7 @@ if __name__=="__main__":
         new_json = json.loads(response.text)
     except Exception as e:
         print("Error parsing json. Exiting.")
+        print(e)
         exit()
     hosts_old = new_json["config"]["dns"]["hosts"]
 
@@ -96,3 +107,5 @@ if __name__=="__main__":
 
     if response.status_code == 204:
         print("Freed API session!")
+else:
+    raise Exception("This program must be run as a stsndalone python file..")
