@@ -19,6 +19,7 @@ if __name__=="__main__":
     
     del cur_pass
 
+    # get api key
     response = requests.request("POST", url + "/auth", json=payload, verify=False)
 
     auth_json = ""
@@ -34,6 +35,8 @@ if __name__=="__main__":
         exit()
 
     print("Authentication complete.")
+    
+    # get hosts
 
     with open("dns_zones-hosts.txt", "r") as hosts:
         host_list = hosts.read()
@@ -46,18 +49,50 @@ if __name__=="__main__":
         try:
             blank = hosts.index('')
             hosts.pop(blank)
-        except Exception as e:
-            print(e)
+        except Exception as e: 
             break
-            
-
-
     
+    # check for old hosts
+
     headers = {"X-FTL-SID": sid, "X-FTL-CSRF": csrf}
+    response = requests.request("GET", url + "/config/dns/hosts", headers=headers)
+    try:
+        new_json = json.loads(response.text)
+    except Exception as e:
+        print("Error parsing json. Exiting.")
+        exit()
+    hosts_old = new_json["config"]["dns"]["hosts"]
+
     from urllib.parse import quote
+
     import time
+    
+    skip = []
+
+    for old_host in hosts_old:
+        for new in hosts:
+            if new.split(" ")[1] == old_host.split(" ")[1]: #prevent accidenally deleting everything else
+                if new.split(" ")[0] != old_host.split(" ")[0]:
+                    print("Deleting", old_host)
+                    response = requests.request("DELETE", url + "/config/dns/hosts/" + quote(old_host), headers=headers)
+                    time.sleep(1) # dont rate limit
+                else: # they must be the same here
+                    skip.append(old_host)
+    # actually add the urls
+
     for host in hosts:
-        print(host)
-        host = quote(host)
-        response = requests.request("PUT", url + "/config/dns/hosts/" + host, headers=headers)
+        if host not in skip: # save a lot of tkme.
+            print("Adding", host)
+            host = quote(host)
+            response = requests.request("PUT", url + "/config/dns/hosts/" + host, headers=headers)
+            time.sleep(1) #same here
     print("done!")
+
+    # delete session to allow other api apps
+    payload = {}
+    headees = {"X-FTL-SID": sid}
+
+    response = requests.request("DELETE", url + "/auth", headers=headers, data=payload, verify=False)
+
+    if response.status_code == 204:
+        print("Freed API session!")
